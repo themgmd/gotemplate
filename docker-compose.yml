@@ -2,7 +2,6 @@ version: "3.5"
 services:
   postgres:
     image: "postgres:13.4-alpine"
-    hostname: user_service_database
     command:
       [
         "-c",
@@ -17,10 +16,12 @@ services:
         "synchronous_commit=off",
       ]
     volumes:
-      - ~/.dockerdata/user-service/postgres:/var/lib/postgresql/data
+      - ~/.dockerdata/gobest/postgres:/var/lib/postgresql/data
     ports:
       - "5439:5432"
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: amir1isaev
-      POSTGRES_PASSWORD: superpassword
-      POSTGRES_DB: learning
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_NAME}
