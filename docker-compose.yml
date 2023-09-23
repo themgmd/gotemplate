@@ -1,0 +1,26 @@
+version: "3.5"
+services:
+  postgres:
+    image: "postgres:13.4-alpine"
+    hostname: user_service_database
+    command:
+      [
+        "-c",
+        "max_connections=2000",
+        "-c",
+        "effective_cache_size=25600MB",
+        "-c",
+        "work_mem=2MB",
+        "-c",
+        "wal_buffers=1MB",
+        "-c",
+        "synchronous_commit=off",
+      ]
+    volumes:
+      - ~/.dockerdata/user-service/postgres:/var/lib/postgresql/data
+    ports:
+      - "5439:5432"
+    environment:
+      POSTGRES_USER: amir1isaev
+      POSTGRES_PASSWORD: superpassword
+      POSTGRES_DB: learning
