@@ -3,7 +3,8 @@ package dhttp
 import (
 	"context"
 	"gotemplate/internal/user/types"
-	"gotemplate/pkg/transport"
+	httplib "gotemplate/pkg/http"
+	"gotemplate/pkg/pagination"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -11,6 +12,7 @@ import (
 
 type UserService interface {
 	Create(context.Context, types.User) error
+	List(ctx context.Context, pagination pagination.Pagination) ([]types.User, int, error)
 }
 
 type User struct {
@@ -22,24 +24,43 @@ func NewUser(user UserService) *User {
 }
 
 func (u *User) SetupRoutes(router *mux.Router) {
-	router.HandleFunc("/user", u.Create).Methods(http.MethodPost)
+	router.HandleFunc("/user", u.create).Methods(http.MethodPost)
+	router.HandleFunc("/user", u.list).Methods(http.MethodGet)
 }
 
-func (u *User) Create(w http.ResponseWriter, r *http.Request) {
+func (u *User) create(w http.ResponseWriter, r *http.Request) {
 	var user types.User
 
-	err := transport.ReadBody(r.Body, &user)
+	err := httplib.ReadBody(r.Body, &user)
 	if err != nil {
-		w.Write(transport.NewErrorResponse(err.Error()).Bytes())
+		httplib.NewErrorResponse(w, httplib.StatusBadRequest, err)
 		return
 	}
 
 	err = u.user.Create(r.Context(), user)
 	if err != nil {
-		w.Write(transport.NewErrorResponse(err.Error()).Bytes())
+		httplib.NewErrorResponse(w, httplib.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(transport.NewSuccessResponse(user).Bytes())
+	httplib.NewSuccessResponse(w, httplib.StatusCreated, user)
+}
+
+func (u *User) list(w http.ResponseWriter, r *http.Request) {
+	var pag pagination.RequestPagination
+
+	err := httplib.ReadQuery(r, &pag)
+	if err != nil {
+		httplib.NewErrorResponse(w, httplib.StatusBadRequest, err)
+		return
+	}
+
+	users, total, err := u.user.List(r.Context(), *pag.ToPagination())
+	if err != nil {
+		httplib.NewErrorResponse(w, httplib.StatusInternalServerError, err)
+		return
+	}
+
+	meta := *pagination.NewResponsePagination(pag, total)
+	httplib.NewListResponse(w, meta, users)
 }

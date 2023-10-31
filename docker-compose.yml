@@ -1,7 +1,7 @@
-version: "3.5"
+version: "3.9"
 services:
   postgres:
-    image: "postgres:13.4-alpine"
+    image: "postgres:16-alpine3.18"
     command:
       [
         "-c",
@@ -18,7 +18,7 @@ services:
     volumes:
       - ~/.dockerdata/gobest/postgres:/var/lib/postgresql/data
     ports:
-      - "5439:5432"
+      - ${POSTGRES_PORT}:5432
     env_file:
       - .env
     environment:

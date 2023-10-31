@@ -16,7 +16,7 @@ func main() {
 	config.Init()
 
 	app := core.New()
-	err := app.Run(ctx)
+	err := app.Start(ctx)
 	if err != nil {
 		log.Fatalf("error occurred while app started: %s", err.Error())
 	}

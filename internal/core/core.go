@@ -5,7 +5,7 @@ import (
 	"gotemplate/internal/config"
 	"gotemplate/internal/server"
 	user "gotemplate/internal/user"
-	"gotemplate/pkg/connectors/postgre"
+	"gotemplate/pkg/postgre"
 
 	"github.com/gorilla/mux"
 )
@@ -19,7 +19,7 @@ func New() *Core {
 	return &Core{}
 }
 
-func (c *Core) Run(_ context.Context) (err error) {
+func (c *Core) Start(_ context.Context) (err error) {
 	cfg := config.Get()
 
 	c.db, err = postgre.New(cfg.Postgre)
@@ -28,6 +28,9 @@ func (c *Core) Run(_ context.Context) (err error) {
 	}
 
 	router := mux.NewRouter()
+	// Example: how use one service in other
+	// userService := user.Setup(c.db, router)
+	// auth.Setup(userService, router)
 	user.Setup(c.db, router)
 
 	c.httpServer = server.NewHttpServer(cfg.HTTP, router)
