@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	errTagNotExist    = errors.New("tag does not exist")
 	errTagSyntax      = errors.New("bad syntax for struct tag pair")
 	errTagKeySyntax   = errors.New("bad syntax for struct tag key")
 	errTagValueSyntax = errors.New("bad syntax for struct tag value")
@@ -122,4 +123,18 @@ func Parse(tag string) (*Tags, error) {
 // was changed.
 func (t *Tags) Tags() []*Tag {
 	return t.tags
+}
+
+// Get returns the tag associated with the given key. If the key is present
+// in the tag the value (which may be empty) is returned. Otherwise, the
+// returned value will be the empty string. The ok return value reports whether
+// the tag exists or not (which the return value is nil).
+func (t *Tags) Get(key string) (*Tag, error) {
+	for _, tag := range t.tags {
+		if tag.Key == key {
+			return tag, nil
+		}
+	}
+
+	return nil, errTagNotExist
 }

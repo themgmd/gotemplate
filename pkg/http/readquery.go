@@ -24,45 +24,54 @@ func ReadQuery(r *http.Request, out interface{}) error {
 	requestQuery := r.URL.Query()
 
 	for i := 0; i < fields; i++ {
-		tag := string(outStruct.Field(i).Tag)
-		tags, err := structtag.Parse(tag)
+		tagForParse := string(outStruct.Field(i).Tag)
+		tags, err := structtag.Parse(tagForParse)
 		if err != nil {
 			return err
 		}
 
-		for _, item := range tags.Tags() {
-			if item.Key == "query" {
-				query := requestQuery.Get(item.Name)
+		tag, err := tags.Get("query")
+		if err != nil {
+			return err
+		}
 
-				field := valueStruct.Field(i)
-				if !field.CanSet() {
-					continue
-				}
+		query := requestQuery.Get(tag.Name)
 
-				switch field.Kind() {
-				default:
-					return ErrUnknownFieldType
-				case reflect.Int:
-					intElement, err := strconv.ParseInt(query, 10, 0)
-					if err != nil {
-						return err
-					}
+		field := valueStruct.Field(i)
+		if !field.CanSet() {
+			continue
+		}
 
-					field.SetInt(intElement)
-					continue
-				case reflect.String:
-					field.SetString(query)
-					continue
-				case reflect.Bool:
-					boolElement, err := strconv.ParseBool(query)
-					if err != nil {
-						return err
-					}
-
-					field.SetBool(boolElement)
-					continue
-				}
+		switch field.Kind() {
+		default:
+			return ErrUnknownFieldType
+		case reflect.Int:
+			intElement, err := strconv.ParseInt(query, 10, 0)
+			if err != nil {
+				return err
 			}
+
+			field.SetInt(intElement)
+			continue
+		case reflect.String:
+			field.SetString(query)
+			continue
+		case reflect.Bool:
+			boolElement, err := strconv.ParseBool(query)
+			if err != nil {
+				return err
+			}
+
+			field.SetBool(boolElement)
+			continue
+		case reflect.Float64, reflect.Float32:
+			floatElement, err := strconv.ParseFloat(query, 64)
+			if err != nil {
+				return err
+			}
+
+			field.SetFloat(floatElement)
+			continue
 		}
 	}
 
