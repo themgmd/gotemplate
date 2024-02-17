@@ -2,12 +2,14 @@ package core
 
 import (
 	"context"
+	"fmt"
+	"gotemplate/internal/auth"
 	"gotemplate/internal/config"
 	"gotemplate/internal/server"
 	user "gotemplate/internal/user"
+	"gotemplate/migrations"
 	"gotemplate/pkg/postgre"
-
-	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type Core struct {
@@ -19,7 +21,7 @@ func New() *Core {
 	return &Core{}
 }
 
-func (c *Core) Start(_ context.Context) (err error) {
+func (c *Core) Start(ctx context.Context) (err error) {
 	cfg := config.Get()
 
 	c.db, err = postgre.New(cfg.Postgre)
@@ -27,10 +29,15 @@ func (c *Core) Start(_ context.Context) (err error) {
 		return err
 	}
 
-	router := mux.NewRouter()
-	// Example: how use one service in other
-	// userService := user.Setup(c.db, router)
-	// auth.Setup(userService, router)
+	applied, err := migrations.Apply(cfg.Postgre)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Applied migrations: %d\n", applied)
+
+	router := http.NewServeMux()
+	auth.Setup(ctx, c.db, router)
 	user.Setup(c.db, router)
 
 	c.httpServer = server.NewHttpServer(cfg.HTTP, router)

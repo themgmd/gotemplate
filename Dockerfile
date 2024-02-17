@@ -1,4 +1,4 @@
-FROM golang:1.21.1-alpine3.18 AS builder
+FROM golang:1.22.0-alpine3.18 AS builder
 
 RUN apk update && apk add --no-cache git ca-certificates tzdata && update-ca-certificates
 
@@ -21,7 +21,6 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 WORKDIR /app
 
 COPY --from=builder /src/go/bin/main .
-COPY --from=builder /src/api/http/schema/ api/http/schema/
-COPY --from=builder /src/logs/ logs/
+COPY --from=builder /src/api api
 
 CMD ["./main"]

@@ -8,33 +8,28 @@ import (
 
 type Repo interface {
 	Create(ctx context.Context, user types.User) error
+	GetByLogin(ctx context.Context, login string) (types.User, error)
 	List(ctx context.Context, pagination pagination.Pagination) ([]types.User, int, error)
 }
 
-type Cache interface {
-	List(ctx context.Context, key string) ([]types.User, int, error)
-}
-
 type User struct {
-	user  Repo
-	cache Cache
+	user Repo
 }
 
-func New(user Repo, cache Cache) *User {
+func New(user Repo) *User {
 	return &User{
-		user:  user,
-		cache: cache,
+		user: user,
 	}
 }
 
-func (u *User) Create(ctx context.Context, user types.User) error {
+func (u User) Create(ctx context.Context, user types.User) error {
 	return u.user.Create(ctx, user)
 }
 
-func (u *User) List(ctx context.Context, pagination pagination.Pagination) ([]types.User, int, error) {
-	// hash pagination
-	// get from redis
-	// u.cache.List(ctx, hash)
+func (u User) GetByLogin(ctx context.Context, login string) (types.User, error) {
+	return u.user.GetByLogin(ctx, login)
+}
 
+func (u User) List(ctx context.Context, pagination pagination.Pagination) ([]types.User, int, error) {
 	return u.user.List(ctx, pagination)
 }

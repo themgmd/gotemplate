@@ -16,7 +16,7 @@ services:
         "synchronous_commit=off",
       ]
     volumes:
-      - ~/.dockerdata/gobest/postgres:/var/lib/postgresql/data
+      - ~/.dockerdata/gotemplate/postgres:/var/lib/postgresql/data
     ports:
       - ${POSTGRES_PORT}:5432
     env_file:

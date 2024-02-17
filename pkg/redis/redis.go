@@ -5,12 +5,18 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+type Config interface {
+	Addr() string
+}
+
 type Client struct {
 	*redis.Client
 }
 
-func Open(ctx context.Context) (*Client, error) {
-	ops := &redis.Options{}
+func NewClient(ctx context.Context, cfg Config) (*Client, error) {
+	ops := &redis.Options{
+		Addr: cfg.Addr(),
+	}
 
 	client := redis.NewClient(ops)
 	err := client.Ping(ctx).Err()

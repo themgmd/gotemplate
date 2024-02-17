@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/goccy/go-json"
+	"gotemplate/pkg/customerror"
 	"gotemplate/pkg/pagination"
 	"log/slog"
 	"net/http"
@@ -10,8 +11,12 @@ import (
 type Payload interface{}
 
 type BaseResponse struct {
-	Success bool   `json:"success"`
-	Comment string `json:"comment,omitempty"`
+	Success bool `json:"success"`
+}
+
+type ErrorResponse struct {
+	BaseResponse
+	customerror.Error
 }
 
 type ListResponse struct {
@@ -20,51 +25,18 @@ type ListResponse struct {
 	Data Payload `json:"data"`
 }
 
-func (lr ListResponse) Bytes() ([]byte, error) {
-	return json.Marshal(lr)
-}
-
 type Response struct {
 	BaseResponse
-	Data Payload `json:"data"`
+	Data Payload `json:"data,omitempty"`
 }
 
-func (r Response) Bytes() ([]byte, error) {
-	return json.Marshal(r)
-}
-
-func NewSuccessResponse(w http.ResponseWriter, statusCode StatusCode, data interface{}) {
-	if statusCode.IsServerError() || statusCode.IsClientError() {
-		slog.Error("status code must me <= 400")
-		return
-	}
-
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(statusCode.Int())
-
-	response := Response{
-		BaseResponse: BaseResponse{
-			Success: true,
-		},
-		Data: data,
-	}
-
-	respBytes, err := response.Bytes()
-	if err != nil {
-		slog.Error("Error occurred while response marshalling json", err)
-		return
-	}
-
-	_, err = w.Write(respBytes)
-	if err != nil {
-		slog.Error("Error occurred while writes response", err)
-		return
-	}
+func bytes(resp any) ([]byte, error) {
+	return json.Marshal(resp)
 }
 
 func NewListResponse(w http.ResponseWriter, pag pagination.ResponsePagination, data interface{}) {
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(StatusOK.Int())
+	w.WriteHeader(http.StatusOK)
 
 	response := ListResponse{
 		BaseResponse: BaseResponse{
@@ -74,7 +46,7 @@ func NewListResponse(w http.ResponseWriter, pag pagination.ResponsePagination, d
 		Data: data,
 	}
 
-	respBytes, err := response.Bytes()
+	respBytes, err := bytes(response)
 	if err != nil {
 		slog.Error("Error occurred while response marshalling json", err)
 		return
@@ -87,23 +59,34 @@ func NewListResponse(w http.ResponseWriter, pag pagination.ResponsePagination, d
 	}
 }
 
-func NewErrorResponse(w http.ResponseWriter, statusCode StatusCode, err error) {
-	if statusCode.IsInfo() || statusCode.IsSuccess() {
-		slog.Error("status code must me greater or equals 400")
-		return
-	}
+func NewSuccessResponse(w http.ResponseWriter, data interface{}) {
+	newResponseWithData(w, http.StatusOK, data)
+}
 
+func NewCreatedResponse(w http.ResponseWriter, data interface{}) {
+	newResponseWithData(w, http.StatusCreated, data)
+}
+
+func NewBadRequestResponse(w http.ResponseWriter, err error) {
+	newErrorResponse(w, http.StatusBadRequest, err)
+}
+
+func NewInternalServerErrorResponse(w http.ResponseWriter, err error) {
+	newErrorResponse(w, http.StatusInternalServerError, err)
+}
+
+func newResponseWithData(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(statusCode.Int())
+	w.WriteHeader(statusCode)
 
 	response := Response{
 		BaseResponse: BaseResponse{
-			Success: false,
-			Comment: err.Error(),
+			Success: true,
 		},
+		Data: data,
 	}
 
-	respBytes, err := response.Bytes()
+	respBytes, err := bytes(response)
 	if err != nil {
 		slog.Error("Error occurred while response marshalling json", err)
 		return
@@ -112,6 +95,32 @@ func NewErrorResponse(w http.ResponseWriter, statusCode StatusCode, err error) {
 	_, err = w.Write(respBytes)
 	if err != nil {
 		slog.Error("Error occurred while writes response", err)
+		return
+	}
+}
+
+func newErrorResponse(w http.ResponseWriter, statusCode int, err error) {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+
+	customErr := customerror.FromError(err)
+
+	response := ErrorResponse{
+		BaseResponse: BaseResponse{
+			Success: false,
+		},
+		Error: *customErr,
+	}
+
+	respBytes, respErr := bytes(response)
+	if err != nil {
+		slog.Error("Error occurred while response marshalling json:", respErr)
+		return
+	}
+
+	_, respErr = w.Write(respBytes)
+	if err != nil {
+		slog.Error("Error occurred while writes response:", respErr)
 		return
 	}
 }

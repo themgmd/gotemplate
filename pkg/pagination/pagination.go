@@ -12,13 +12,15 @@ type RequestPagination struct {
 
 type ResponsePagination struct {
 	RequestPagination
-	TotalPages int `json:"totalPages"`
+	TotalPages   int `json:"totalPages"`
+	TotalEntries int `json:"totalEntries"`
 }
 
 func NewResponsePagination(rp RequestPagination, total int) *ResponsePagination {
 	return &ResponsePagination{
 		RequestPagination: rp,
-		TotalPages:        total,
+		TotalPages:        total / rp.PerPage,
+		TotalEntries:      total,
 	}
 }
 

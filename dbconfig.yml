@@ -1,0 +1,5 @@
+gotemplate:
+  dialect: postgres
+  datasource: host= user= password= dbname= port= sslmode=disable
+  dir: ./migrations/schema
+  table: migration

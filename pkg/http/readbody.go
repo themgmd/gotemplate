@@ -1,17 +1,25 @@
 package http
 
 import (
+	"gotemplate/pkg/customerror"
+	"gotemplate/pkg/validator"
 	"io"
 
 	"github.com/goccy/go-json"
 )
 
-func ReadBody(body io.ReadCloser, receiver interface{}) error {
+var ErrUnprocessableEntity = customerror.New(customerror.UnprocessableEntityErrorCode, "unprocessable entity")
+
+func ReadBody(body io.ReadCloser, receiver validator.Validator) error {
 	err := json.NewDecoder(body).Decode(receiver)
 	if err != nil {
 		return err
 	}
 
-	// TODO: validation
+	err = receiver.Validate()
+	if err != nil {
+		return customerror.Wrap(ErrUnprocessableEntity, err)
+	}
+
 	return nil
 }

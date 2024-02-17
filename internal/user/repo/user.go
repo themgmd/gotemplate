@@ -1,7 +1,8 @@
-package postgre
+package repo
 
 import (
 	"context"
+	"fmt"
 	"gotemplate/internal/user/types"
 	"gotemplate/pkg/pagination"
 	"gotemplate/pkg/postgre"
@@ -20,11 +21,11 @@ func (u *User) Create(ctx context.Context, user types.User) error {
 		ctx,
 		createUserQuery,
 		user.ID,
-		user.FamilyName,
-		user.GivenName,
 		user.Email,
+		user.Username,
+		user.OTPSecret,
 		user.Password,
-		user.RegDate,
+		user.CreatedAt,
 		user.UpdatedAt,
 	)
 	if err != nil {
@@ -34,8 +35,15 @@ func (u *User) Create(ctx context.Context, user types.User) error {
 	return nil
 }
 
-func (u *User) GetById() types.User {
-	return types.User{}
+func (u *User) GetByLogin(ctx context.Context, login string) (types.User, error) {
+	var user types.User
+
+	err := u.db.GetContext(ctx, &user, getByLogin, login)
+	if err != nil {
+		return user, fmt.Errorf("u.db.GetContext: %w", err)
+	}
+
+	return user, nil
 }
 
 func (u *User) List(ctx context.Context, pagination pagination.Pagination) ([]types.User, int, error) {
@@ -50,12 +58,4 @@ func (u *User) List(ctx context.Context, pagination pagination.Pagination) ([]ty
 	}
 
 	return users, total, nil
-}
-
-func (u *User) Delete() string {
-	return ""
-}
-
-func (u *User) Update() string {
-	return ""
 }

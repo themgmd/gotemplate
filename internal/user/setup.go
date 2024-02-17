@@ -1,13 +1,13 @@
 package user
 
 import (
-	"github.com/gorilla/mux"
 	"gotemplate/internal/user/dhttp"
-	userPostgre "gotemplate/internal/user/postgre"
+	userPostgre "gotemplate/internal/user/repo"
 	"gotemplate/pkg/postgre"
+	"net/http"
 )
 
-func Setup(db *postgre.DB, router *mux.Router) *User {
+func Setup(db *postgre.DB, router *http.ServeMux) *User {
 	userRepo := userPostgre.NewUser(db)
 	userService := New(userRepo)
 	userHandler := dhttp.NewUser(userService)

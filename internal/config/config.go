@@ -2,11 +2,10 @@ package config
 
 import (
 	"fmt"
+	"github.com/caarlos0/env/v9"
 	"log"
 	"sync"
 	"time"
-
-	"github.com/caarlos0/env/v9"
 )
 
 var (
@@ -19,7 +18,9 @@ func Get() *Config {
 }
 
 type Config struct {
+	App     AppConfig
 	HTTP    HTTPConfig
+	Redis   RedisConfig
 	Postgre PostgreConfig
 }
 
@@ -56,6 +57,19 @@ func (pc PostgreConfig) GetMaxIdleConn() int {
 
 func (pc PostgreConfig) GetMaxOpenConn() int {
 	return pc.MaxOpenConn
+}
+
+type AppConfig struct {
+	EncryptionKey string `env:"ENCRYPTION_KEY,required"`
+}
+
+type RedisConfig struct {
+	Host string `env:"REDIS_HOST"`
+	Port string `env:"REDIS_PORT"`
+}
+
+func (rc RedisConfig) Addr() string {
+	return fmt.Sprintf("%s:%s", rc.Host, rc.Port)
 }
 
 func Init() {
