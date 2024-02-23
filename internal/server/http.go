@@ -26,7 +26,7 @@ func NewHttpServer(cfg config.HTTPConfig, handler http.Handler) *Http {
 func (h *Http) MustStart() {
 	err := h.httpServer.ListenAndServe()
 	if err != nil {
-		log.Fatalf("http server failed: %s", err.Error())
+		log.Fatalf("openapi server failed: %s", err.Error())
 	}
 }
 

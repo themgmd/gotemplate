@@ -30,7 +30,7 @@ func (rp RequestPagination) ToPagination() *Pagination {
 	}
 
 	return &Pagination{
-		Limit:  rp.PerPage - rp.CurrentPage,
-		Offset: rp.CurrentPage,
+		Limit:  rp.PerPage,
+		Offset: rp.CurrentPage * rp.PerPage,
 	}
 }
