@@ -3,6 +3,8 @@ package otp
 import (
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
+	"log/slog"
+	"time"
 )
 
 const (
@@ -31,5 +33,14 @@ func Generate(username string) (*otp.Key, error) {
 }
 
 func Validate(passcode, secret string) bool {
-	return totp.Validate(passcode, secret)
+	ok, err := totp.ValidateCustom(passcode, secret, time.Now(), totp.ValidateOpts{
+		Digits:    DefaultTOPTLength,
+		Period:    DefaultTOTPPeriod,
+		Algorithm: otp.AlgorithmSHA512,
+	})
+	if err != nil {
+		slog.Error("totp.ValidateCustom", slog.String("error", err.Error()))
+	}
+
+	return ok
 }

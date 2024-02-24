@@ -24,7 +24,7 @@ func (c Cache) SaveTempUser(ctx context.Context, user types.CacheUser) (string, 
 	}
 
 	sessionKey := fmt.Sprintf("%x", key)
-	err = c.redis.Set(ctx, sessionKey, user, time.Minute*15).Err()
+	err = c.redis.Set(ctx, sessionKey, &user, time.Minute*15).Err()
 	if err != nil {
 		return "", fmt.Errorf("c.redis.Set: %w", err)
 	}
@@ -34,7 +34,7 @@ func (c Cache) SaveTempUser(ctx context.Context, user types.CacheUser) (string, 
 
 func (c Cache) GetTempUser(ctx context.Context, key string) (types.CacheUser, error) {
 	var user types.CacheUser
-	err := c.redis.Get(ctx, key).Scan(user)
+	err := c.redis.Get(ctx, key).Scan(&user)
 	if err != nil {
 		return user, fmt.Errorf("c.redis.Get: %w", err)
 	}

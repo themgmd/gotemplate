@@ -4,7 +4,10 @@ type ErrCode int
 
 const (
 	UnknownErrorCode = iota
-	UnprocessableEntityErrorCode
+	InvalidCredentialsErrorCode
+	InvalidJWTTokenErrorCode
+	InvalidOTPCodeErrorCode
+	RecordNotFoundErrorCode
 )
 
 func (ec ErrCode) IsValid() bool {

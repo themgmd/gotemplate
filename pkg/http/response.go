@@ -113,13 +113,13 @@ func newErrorResponse(w http.ResponseWriter, statusCode int, err error) {
 	}
 
 	respBytes, respErr := bytes(response)
-	if err != nil {
+	if respErr != nil {
 		slog.Error("Error occurred while response marshalling json:", respErr)
 		return
 	}
 
 	_, respErr = w.Write(respBytes)
-	if err != nil {
+	if respErr != nil {
 		slog.Error("Error occurred while writes response:", respErr)
 		return
 	}

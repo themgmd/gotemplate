@@ -2,8 +2,10 @@ package repo
 
 import (
 	"context"
-	"fmt"
+	"database/sql"
+	"errors"
 	"gotemplate/internal/user/types"
+	"gotemplate/pkg/customerror"
 	"gotemplate/pkg/pagination"
 	"gotemplate/pkg/postgre"
 )
@@ -29,7 +31,7 @@ func (u *User) Create(ctx context.Context, user types.User) error {
 		user.UpdatedAt,
 	)
 	if err != nil {
-		return err
+		return customerror.Wrap("u.db.ExecContext: %w", err)
 	}
 
 	return nil
@@ -39,11 +41,28 @@ func (u *User) GetByLogin(ctx context.Context, login string) (types.User, error)
 	var user types.User
 
 	err := u.db.GetContext(ctx, &user, getByLogin, login)
-	if err != nil {
-		return user, fmt.Errorf("u.db.GetContext: %w", err)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return user, customerror.ErrUserNotExist
+	case err != nil:
+		return user, customerror.Wrap("u.db.GetContext: %w", err)
 	}
 
 	return user, nil
+}
+
+func (u *User) CheckUserExist(ctx context.Context, login string) error {
+	var exist bool
+	err := u.db.GetContext(ctx, &exist, checkUserByLogin, login)
+	if err != nil {
+		return customerror.Wrap("u.db.GetContext: %w", err)
+	}
+
+	if !exist {
+		return customerror.ErrUserNotExist
+	}
+
+	return nil
 }
 
 func (u *User) List(ctx context.Context, pagination pagination.Pagination) ([]types.User, int, error) {
@@ -54,7 +73,7 @@ func (u *User) List(ctx context.Context, pagination pagination.Pagination) ([]ty
 
 	err := u.db.SelectContext(ctx, users, getUserListQuery, pagination.Limit, pagination.Offset)
 	if err != nil {
-		return users, total, err
+		return users, total, customerror.Wrap("u.db.SelectContext: %w", err)
 	}
 
 	return users, total, nil

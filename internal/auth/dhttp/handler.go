@@ -9,8 +9,8 @@ import (
 
 type Service interface {
 	InitRegistration(context.Context, types.InitRegistrationRequest) (types.InitRegistrationResponse, error)
-	FinishRegistration(context.Context, types.FinishRegistrationRequest) error
-	Login(context.Context, types.LoginRequest) error
+	FinishRegistration(context.Context, types.FinishRegistrationRequest) (types.Tokens, error)
+	Login(context.Context, types.LoginRequest) (types.Tokens, error)
 }
 
 type Handler struct {
@@ -51,13 +51,13 @@ func (h Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.FinishRegistration(r.Context(), request)
+	tokenPairs, err := h.service.FinishRegistration(r.Context(), request)
 	if err != nil {
 		httplib.NewInternalServerErrorResponse(w, err)
 		return
 	}
 
-	httplib.NewCreatedResponse(w, nil)
+	httplib.NewCreatedResponse(w, tokenPairs)
 }
 
 func (h Handler) login(w http.ResponseWriter, r *http.Request) {
@@ -68,11 +68,11 @@ func (h Handler) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.Login(r.Context(), request)
+	tokenPairs, err := h.service.Login(r.Context(), request)
 	if err != nil {
 		httplib.NewInternalServerErrorResponse(w, err)
 		return
 	}
 
-	httplib.NewSuccessResponse(w, nil)
+	httplib.NewSuccessResponse(w, tokenPairs)
 }

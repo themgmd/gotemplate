@@ -5,6 +5,7 @@ import (
 	"gotemplate/internal/auth/cache"
 	"gotemplate/internal/auth/dhttp"
 	"gotemplate/internal/config"
+	"gotemplate/internal/user"
 	repo "gotemplate/internal/user/repo"
 	"gotemplate/pkg/postgre"
 	"gotemplate/pkg/redis"
@@ -21,7 +22,8 @@ func Setup(ctx context.Context, db *postgre.DB, router *http.ServeMux) {
 	}
 
 	authCache := cache.New(client)
-	service := New(authCache, userRepo)
+	userService := user.New(userRepo)
+	service := New(authCache, userService)
 
 	handler := dhttp.NewHandler(service)
 	dhttp.NewAuth(handler).SetupRoutes(router)

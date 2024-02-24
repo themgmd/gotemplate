@@ -8,8 +8,6 @@ import (
 	"github.com/goccy/go-json"
 )
 
-var ErrUnprocessableEntity = customerror.New(customerror.UnprocessableEntityErrorCode, "unprocessable entity")
-
 func ReadBody(body io.ReadCloser, receiver validator.Validator) error {
 	err := json.NewDecoder(body).Decode(receiver)
 	if err != nil {
@@ -18,7 +16,7 @@ func ReadBody(body io.ReadCloser, receiver validator.Validator) error {
 
 	err = receiver.Validate()
 	if err != nil {
-		return customerror.Wrap(ErrUnprocessableEntity, err)
+		return customerror.Wrap("unprocessable entity: %w", err)
 	}
 
 	return nil

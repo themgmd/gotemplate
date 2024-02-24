@@ -9,6 +9,7 @@ import (
 type Repo interface {
 	Create(ctx context.Context, user types.User) error
 	GetByLogin(ctx context.Context, login string) (types.User, error)
+	CheckUserExist(ctx context.Context, login string) error
 	List(ctx context.Context, pagination pagination.Pagination) ([]types.User, int, error)
 }
 
@@ -28,6 +29,15 @@ func (u User) Create(ctx context.Context, user types.User) error {
 
 func (u User) GetByLogin(ctx context.Context, login string) (types.User, error) {
 	return u.user.GetByLogin(ctx, login)
+}
+
+func (u User) CheckUserExist(ctx context.Context, login string) bool {
+	err := u.user.CheckUserExist(ctx, login)
+	if err != nil {
+		return false
+	}
+
+	return true
 }
 
 func (u User) List(ctx context.Context, pagination pagination.Pagination) ([]types.User, int, error) {

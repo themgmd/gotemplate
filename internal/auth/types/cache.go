@@ -11,6 +11,10 @@ type CacheUser struct {
 	OTPSecret string
 }
 
+func (cu *CacheUser) MarshalBinary() (data []byte, err error) {
+	return json.Marshal(cu)
+}
+
 func (cu *CacheUser) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, &cu)
 }

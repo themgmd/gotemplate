@@ -7,6 +7,7 @@ import (
 
 type Config interface {
 	Addr() string
+	Pass() string
 }
 
 type Client struct {
@@ -15,7 +16,8 @@ type Client struct {
 
 func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	ops := &redis.Options{
-		Addr: cfg.Addr(),
+		Addr:     cfg.Addr(),
+		Password: cfg.Pass(),
 	}
 
 	client := redis.NewClient(ops)

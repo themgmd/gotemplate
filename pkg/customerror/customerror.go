@@ -35,8 +35,8 @@ func FromError(err error) *Error {
 	return err.(*Error)
 }
 
-func Wrap(err1, err2 error) error {
-	return fmt.Errorf("%w: %w", err1, err2)
+func Wrap(f string, err error) error {
+	return fmt.Errorf(f, err)
 }
 
 func Unwrap(err error) error {

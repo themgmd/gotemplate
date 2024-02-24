@@ -37,6 +37,7 @@ func (c *Core) Start(ctx context.Context) (err error) {
 	fmt.Printf("Applied migrations: %d\n", applied)
 
 	router := http.NewServeMux()
+
 	auth.Setup(ctx, c.db, router)
 	user.Setup(c.db, router)
 

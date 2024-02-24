@@ -18,7 +18,6 @@ type InitRegistrationResponse struct {
 
 type FinishRegistrationRequest struct {
 	Identifier string `json:"identifier"`
-	Email      string `json:"email"`
 	Code       string `json:"code"`
 }
 
