@@ -4,7 +4,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"gotemplate/internal/auth/types"
-	"gotemplate/pkg/customerror"
+	"gotemplate/pkg/errors"
 	"time"
 )
 
@@ -46,11 +46,11 @@ func Verify(key, token string) (jwt.Claims, error) {
 	})
 
 	if err != nil {
-		return nil, customerror.Wrap("jwt.Parse: %w", err)
+		return nil, errors.Wrap(err, "jwt token parse")
 	}
 
 	if !jwtToken.Valid {
-		return nil, customerror.New(customerror.InvalidJWTTokenErrorCode, "invalid token")
+		return nil, errors.New("invalid token")
 	}
 
 	return jwtToken.Claims, nil

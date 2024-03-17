@@ -1,7 +1,7 @@
 package http
 
 import (
-	"gotemplate/pkg/customerror"
+	"gotemplate/pkg/errors"
 	"gotemplate/pkg/validator"
 	"io"
 
@@ -16,7 +16,7 @@ func ReadBody(body io.ReadCloser, receiver validator.Validator) error {
 
 	err = receiver.Validate()
 	if err != nil {
-		return customerror.Wrap("unprocessable entity: %w", err)
+		return errors.Wrap(err, "validation error")
 	}
 
 	return nil

@@ -2,9 +2,9 @@ package dhttp
 
 import (
 	"context"
+	"github.com/go-chi/chi/v5"
 	"gotemplate/internal/user/types"
 	"gotemplate/pkg/pagination"
-	"net/http"
 )
 
 type UserService interface {
@@ -20,6 +20,6 @@ func NewUser(user UserService) *User {
 	return &User{user: user}
 }
 
-func (u *User) SetupRoutes(router *http.ServeMux) {
+func (u *User) SetupRoutes(router chi.Router) {
 
 }

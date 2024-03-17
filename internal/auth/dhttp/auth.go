@@ -1,6 +1,8 @@
 package dhttp
 
-import "net/http"
+import (
+	"github.com/go-chi/chi/v5"
+)
 
 type Auth struct {
 	handler *Handler
@@ -12,8 +14,8 @@ func NewAuth(handler *Handler) *Auth {
 	}
 }
 
-func (a Auth) SetupRoutes(router *http.ServeMux) {
-	router.HandleFunc("POST /auth/registration", a.handler.initRegistration)
-	router.HandleFunc("POST /auth/registration/{identifier}", a.handler.finishRegistration)
-	router.HandleFunc("POST /auth/login", a.handler.login)
+func (a Auth) SetupRoutes(router chi.Router) {
+	router.HandleFunc("/auth/registration", a.handler.initRegistration)
+	router.HandleFunc("/auth/registration/{identifier}", a.handler.finishRegistration)
+	router.HandleFunc("/auth/login", a.handler.login)
 }

@@ -1,5 +1,7 @@
 package pagination
 
+import "math"
+
 type Pagination struct {
 	Limit  int
 	Offset int
@@ -17,9 +19,11 @@ type ResponsePagination struct {
 }
 
 func NewResponsePagination(rp RequestPagination, total int) *ResponsePagination {
+	totalPages := math.Ceil(float64(total) / float64(rp.PerPage))
+
 	return &ResponsePagination{
 		RequestPagination: rp,
-		TotalPages:        total / rp.PerPage,
+		TotalPages:        int(totalPages),
 		TotalEntries:      total,
 	}
 }

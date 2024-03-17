@@ -12,7 +12,6 @@ import (
 	"gotemplate/internal/config"
 	userTypes "gotemplate/internal/user/types"
 	"gotemplate/pkg/cipher"
-	"gotemplate/pkg/customerror"
 	"image/png"
 )
 
@@ -47,7 +46,7 @@ func (a Auth) InitRegistration(
 ) (resp types.InitRegistrationResponse, err error) {
 	exist := a.user.CheckUserExist(ctx, request.Username)
 	if exist {
-		err = customerror.ErrInvalidCredentials
+		err = errors.New("invalid credentials")
 		return
 	}
 
@@ -131,7 +130,6 @@ func (a Auth) FinishRegistration(
 
 	tokenPair, err = jwt.GeneratePair(newUser.ID.String(), config.Get().App.JwtSecret)
 	if err != nil {
-		err = customerror.Wrap("jwt.GeneratePair: %w", err)
 		return
 	}
 
@@ -161,13 +159,11 @@ func (a Auth) Login(ctx context.Context, request types.LoginRequest) (
 	}
 
 	if !otp.Validate(request.Code, otpSecret) {
-		err = customerror.New(customerror.InvalidOTPCodeErrorCode, "invalid otp code")
 		return
 	}
 
 	tokenPair, err = jwt.GeneratePair(user.ID.String(), config.Get().App.JwtSecret)
 	if err != nil {
-		err = customerror.Wrap("jwt.GeneratePair: %w", err)
 		return
 	}
 

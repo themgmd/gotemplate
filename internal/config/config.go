@@ -13,10 +13,6 @@ var (
 	once   sync.Once
 )
 
-func Get() *Config {
-	return config
-}
-
 type Config struct {
 	App     AppConfig
 	HTTP    HTTPConfig
@@ -25,15 +21,8 @@ type Config struct {
 }
 
 type HTTPConfig struct {
-	Host         string        `env:"HTTP_HOST"`
-	Port         string        `env:"HTTP_PORT"`
-	WriteTimeout time.Duration `env:"HTTP_WRITE_TIMEOUT"`
-	ReadTimeout  time.Duration `env:"HTTP_READ_TIMEOUT"`
-	IdleTimeout  time.Duration `env:"HTTP_IDLE_TIMEOUT"`
-}
-
-func (h HTTPConfig) GetAddress() string {
-	return fmt.Sprintf("%s:%s", h.Host, h.Port)
+	Host              string        `env:"HTTP_HOST"`
+	ReadHeaderTimeout time.Duration `env:"READ_HEADER_TIMEOUT"`
 }
 
 type PostgreConfig struct {
@@ -46,17 +35,9 @@ type PostgreConfig struct {
 	MaxOpenConn int    `env:"POSTGRES_MAX_OPEN_CONN"`
 }
 
-func (pc PostgreConfig) GetDSN() string {
+func (pc PostgreConfig) DSN() string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable",
 		pc.User, pc.Password, pc.Host, pc.Port, pc.Name)
-}
-
-func (pc PostgreConfig) GetMaxIdleConn() int {
-	return pc.MaxIdleConn
-}
-
-func (pc PostgreConfig) GetMaxOpenConn() int {
-	return pc.MaxOpenConn
 }
 
 type AppConfig struct {
@@ -66,22 +47,16 @@ type AppConfig struct {
 
 type RedisConfig struct {
 	Host     string `env:"REDIS_HOST"`
-	Port     string `env:"REDIS_PORT"`
 	Password string `env:"REDIS_PASSWORD"`
 }
 
-func (rc RedisConfig) Addr() string {
-	return fmt.Sprintf("%s:%s", rc.Host, rc.Port)
-}
-func (rc RedisConfig) Pass() string {
-	return rc.Password
-}
-
-func Init() {
+func Get() *Config {
 	once.Do(func() {
 		err := env.Parse(config)
 		if err != nil {
 			log.Fatal(err)
 		}
 	})
+
+	return config
 }
