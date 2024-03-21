@@ -1,14 +1,12 @@
 package http
 
 import (
-	"gotemplate/pkg/customerror"
+	"gotemplate/pkg/errors"
 	"gotemplate/pkg/validator"
 	"io"
 
 	"github.com/goccy/go-json"
 )
-
-var ErrUnprocessableEntity = customerror.New(customerror.UnprocessableEntityErrorCode, "unprocessable entity")
 
 func ReadBody(body io.ReadCloser, receiver validator.Validator) error {
 	err := json.NewDecoder(body).Decode(receiver)
@@ -18,7 +16,7 @@ func ReadBody(body io.ReadCloser, receiver validator.Validator) error {
 
 	err = receiver.Validate()
 	if err != nil {
-		return customerror.Wrap(ErrUnprocessableEntity, err)
+		return errors.Wrap(err, "validation error")
 	}
 
 	return nil

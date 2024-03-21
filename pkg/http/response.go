@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/goccy/go-json"
-	"gotemplate/pkg/customerror"
+	"gotemplate/pkg/errors"
 	"gotemplate/pkg/pagination"
 	"log/slog"
 	"net/http"
@@ -16,7 +16,7 @@ type BaseResponse struct {
 
 type ErrorResponse struct {
 	BaseResponse
-	customerror.Error
+	Error string `json:"error"`
 }
 
 type ListResponse struct {
@@ -59,22 +59,6 @@ func NewListResponse(w http.ResponseWriter, pag pagination.ResponsePagination, d
 	}
 }
 
-func NewSuccessResponse(w http.ResponseWriter, data interface{}) {
-	newResponseWithData(w, http.StatusOK, data)
-}
-
-func NewCreatedResponse(w http.ResponseWriter, data interface{}) {
-	newResponseWithData(w, http.StatusCreated, data)
-}
-
-func NewBadRequestResponse(w http.ResponseWriter, err error) {
-	newErrorResponse(w, http.StatusBadRequest, err)
-}
-
-func NewInternalServerErrorResponse(w http.ResponseWriter, err error) {
-	newErrorResponse(w, http.StatusInternalServerError, err)
-}
-
 func newResponseWithData(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
@@ -103,24 +87,36 @@ func newErrorResponse(w http.ResponseWriter, statusCode int, err error) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
-	customErr := customerror.FromError(err)
-
 	response := ErrorResponse{
 		BaseResponse: BaseResponse{
 			Success: false,
 		},
-		Error: *customErr,
+		Error: errors.Unwrap(err).Error(),
 	}
 
 	respBytes, respErr := bytes(response)
-	if err != nil {
+	if respErr != nil {
 		slog.Error("Error occurred while response marshalling json:", respErr)
-		return
 	}
 
 	_, respErr = w.Write(respBytes)
-	if err != nil {
+	if respErr != nil {
 		slog.Error("Error occurred while writes response:", respErr)
-		return
 	}
+}
+
+func NewSuccessResponse(w http.ResponseWriter, data interface{}) {
+	newResponseWithData(w, http.StatusOK, data)
+}
+
+func NewCreatedResponse(w http.ResponseWriter, data interface{}) {
+	newResponseWithData(w, http.StatusCreated, data)
+}
+
+func NewBadRequestResponse(w http.ResponseWriter, err error) {
+	newErrorResponse(w, http.StatusBadRequest, err)
+}
+
+func NewInternalServerErrorResponse(w http.ResponseWriter, err error) {
+	newErrorResponse(w, http.StatusInternalServerError, err)
 }

@@ -1,32 +1,57 @@
 package postgre
 
 import (
+	"context"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 
-type Config interface {
-	GetDSN() string
-	GetMaxIdleConn() int
-	GetMaxOpenConn() int
+type Options struct {
+	DSN         string
+	MaxOpenConn int
+	MaxIdleConn int
+}
+
+type Option func(*Options) error
+
+func DSN(dsn string) Option {
+	return func(options *Options) error {
+		options.DSN = dsn
+		return nil
+	}
+}
+
+func MaxOpenConn(maxOpenConn int) Option {
+	return func(options *Options) error {
+		options.MaxOpenConn = maxOpenConn
+		return nil
+	}
+}
+
+func MaxIdleConn(maxIdleConn int) Option {
+	return func(options *Options) error {
+		options.MaxIdleConn = maxIdleConn
+		return nil
+	}
 }
 
 type DB struct {
 	*sqlx.DB
 }
 
-func New(cfg Config) (*DB, error) {
-	db, err := sqlx.Open("pgx", cfg.GetDSN())
+func NewConn(ctx context.Context, options ...Option) (*DB, error) {
+	var option Options
+
+	for i := range options {
+		if err := options[i](&option); err != nil {
+			return nil, err
+		}
+	}
+
+	db, err := sqlx.ConnectContext(ctx, "pgx", option.DSN)
 	if err != nil {
 		return nil, err
 	}
-
-	if err = db.Ping(); err != nil {
-		return nil, err
-	}
-
-	db.SetMaxIdleConns(cfg.GetMaxIdleConn())
-	db.SetMaxOpenConns(cfg.GetMaxOpenConn())
 
 	return &DB{db}, nil
 }

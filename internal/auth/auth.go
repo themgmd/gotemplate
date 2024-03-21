@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"gotemplate/internal/auth/hasher"
+	"gotemplate/internal/auth/jwt"
 	"gotemplate/internal/auth/otp"
 	"gotemplate/internal/auth/types"
 	"gotemplate/internal/config"
@@ -21,6 +22,7 @@ type Cache interface {
 
 type User interface {
 	Create(ctx context.Context, user userTypes.User) error
+	CheckUserExist(ctx context.Context, login string) bool
 	GetByLogin(ctx context.Context, login string) (userTypes.User, error)
 }
 
@@ -42,6 +44,12 @@ func (a Auth) InitRegistration(
 	ctx context.Context,
 	request types.InitRegistrationRequest,
 ) (resp types.InitRegistrationResponse, err error) {
+	exist := a.user.CheckUserExist(ctx, request.Username)
+	if exist {
+		err = errors.New("invalid credentials")
+		return
+	}
+
 	cacheUser := types.CacheUser{
 		Username: request.Username,
 		Email:    request.Email,
@@ -92,7 +100,7 @@ func (a Auth) InitRegistration(
 func (a Auth) FinishRegistration(
 	ctx context.Context,
 	request types.FinishRegistrationRequest,
-) (err error) {
+) (tokenPair types.Tokens, err error) {
 	cacheUser, err := a.cache.GetTempUser(ctx, request.Identifier)
 	if err != nil {
 		err = fmt.Errorf("a.cache.GetTempUser: %w", err)
@@ -120,30 +128,44 @@ func (a Auth) FinishRegistration(
 		return
 	}
 
+	tokenPair, err = jwt.GeneratePair(newUser.ID.String(), config.Get().App.JwtSecret)
+	if err != nil {
+		return
+	}
+
 	return
 }
 
-func (a Auth) Login(ctx context.Context, request types.LoginRequest) error {
+func (a Auth) Login(ctx context.Context, request types.LoginRequest) (
+	tokenPair types.Tokens,
+	err error,
+) {
 	user, err := a.user.GetByLogin(ctx, request.Login)
 	if err != nil {
-		return fmt.Errorf("a.user.GetByLogin: %w", err)
+		err = fmt.Errorf("a.user.GetByLogin: %w", err)
+		return
 	}
 
 	err = hasher.CompareWithPassword(request.Password, user.Password)
 	if err != nil {
-		return fmt.Errorf("hasher.CompareWithPassword: %w", err)
+		err = fmt.Errorf("hasher.CompareWithPassword: %w", err)
+		return
 	}
 
 	otpSecret, err := a.cipher.Decode(user.OTPSecret)
 	if err != nil {
-		return fmt.Errorf("a.cipher.Decode: %w", err)
+		err = fmt.Errorf("a.cipher.Decode: %w", err)
+		return
 	}
 
 	if !otp.Validate(request.Code, otpSecret) {
-		return errors.New("invalid otp code")
+		return
 	}
 
-	// todo: jwt token generate
+	tokenPair, err = jwt.GeneratePair(user.ID.String(), config.Get().App.JwtSecret)
+	if err != nil {
+		return
+	}
 
-	return nil
+	return
 }

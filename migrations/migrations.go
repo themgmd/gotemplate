@@ -14,18 +14,12 @@ var (
 	migrations embed.FS
 )
 
-type Config interface {
-	GetDSN() string
-}
-
-func Apply(pgCfg Config) (applied int, err error) {
+func Apply(dsn string) (applied int, err error) {
 	subFS, _ := fs.Sub(migrations, "schema")
 	staticFS := http.FS(subFS)
 	var migrationSource = &migrate.HttpFileSystemMigrationSource{
 		FileSystem: staticFS,
 	}
-
-	dsn := pgCfg.GetDSN()
 
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {

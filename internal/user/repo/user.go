@@ -2,7 +2,8 @@ package repo
 
 import (
 	"context"
-	"fmt"
+	"database/sql"
+	"errors"
 	"gotemplate/internal/user/types"
 	"gotemplate/pkg/pagination"
 	"gotemplate/pkg/postgre"
@@ -39,11 +40,29 @@ func (u *User) GetByLogin(ctx context.Context, login string) (types.User, error)
 	var user types.User
 
 	err := u.db.GetContext(ctx, &user, getByLogin, login)
-	if err != nil {
-		return user, fmt.Errorf("u.db.GetContext: %w", err)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+
+		return user, errors.New("user not found")
+	case err != nil:
+		return user, err
 	}
 
 	return user, nil
+}
+
+func (u *User) CheckUserExist(ctx context.Context, login string) error {
+	var exist bool
+	err := u.db.GetContext(ctx, &exist, checkUserByLogin, login)
+	if err != nil {
+		return err
+	}
+
+	if !exist {
+		return errors.New("user not found")
+	}
+
+	return nil
 }
 
 func (u *User) List(ctx context.Context, pagination pagination.Pagination) ([]types.User, int, error) {

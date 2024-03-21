@@ -13,10 +13,6 @@ var (
 	once   sync.Once
 )
 
-func Get() *Config {
-	return config
-}
-
 type Config struct {
 	App     AppConfig
 	HTTP    HTTPConfig
@@ -25,58 +21,42 @@ type Config struct {
 }
 
 type HTTPConfig struct {
-	Host         string        `env:"HTTP_HOST"`
-	Port         string        `env:"HTTP_PORT"`
-	WriteTimeout time.Duration `env:"HTTP_WRITE_TIMEOUT"`
-	ReadTimeout  time.Duration `env:"HTTP_READ_TIMEOUT"`
-	IdleTimeout  time.Duration `env:"HTTP_IDLE_TIMEOUT"`
-}
-
-func (h HTTPConfig) GetAddress() string {
-	return fmt.Sprintf("%s:%s", h.Host, h.Port)
+	Host              string        `env:"HTTP_HOST"`
+	ReadHeaderTimeout time.Duration `env:"READ_HEADER_TIMEOUT"`
 }
 
 type PostgreConfig struct {
 	Host        string `env:"POSTGRES_HOST"`
-	Port        string `env:"POSTGRES_PORT"`
+	Port        int    `env:"POSTGRES_PORT"`
 	Name        string `env:"POSTGRES_NAME"`
 	User        string `env:"POSTGRES_USER"`
 	Password    string `env:"POSTGRES_PASSWORD"`
-	MaxIdleConn int    `env:"MAX_IDLE_CONN" default:"120"`
-	MaxOpenConn int    `env:"MAX_OPEN_CONN" default:"60"`
+	MaxIdleConn int    `env:"POSTGRES_MAX_IDLE_CONN"`
+	MaxOpenConn int    `env:"POSTGRES_MAX_OPEN_CONN"`
 }
 
-func (pc PostgreConfig) GetDSN() string {
-	return fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		pc.Host, pc.Port, pc.User, pc.Name, pc.Password)
-}
-
-func (pc PostgreConfig) GetMaxIdleConn() int {
-	return pc.MaxIdleConn
-}
-
-func (pc PostgreConfig) GetMaxOpenConn() int {
-	return pc.MaxOpenConn
+func (pc PostgreConfig) DSN() string {
+	return fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable",
+		pc.User, pc.Password, pc.Host, pc.Port, pc.Name)
 }
 
 type AppConfig struct {
-	EncryptionKey string `env:"ENCRYPTION_KEY,required"`
+	JwtSecret     string `env:"JWT_SECRET"`
+	EncryptionKey string `env:"ENCRYPTION_KEY"`
 }
 
 type RedisConfig struct {
-	Host string `env:"REDIS_HOST"`
-	Port string `env:"REDIS_PORT"`
+	Host     string `env:"REDIS_HOST"`
+	Password string `env:"REDIS_PASSWORD"`
 }
 
-func (rc RedisConfig) Addr() string {
-	return fmt.Sprintf("%s:%s", rc.Host, rc.Port)
-}
-
-func Init() {
+func Get() *Config {
 	once.Do(func() {
 		err := env.Parse(config)
 		if err != nil {
 			log.Fatal(err)
 		}
 	})
+
+	return config
 }
