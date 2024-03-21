@@ -33,15 +33,15 @@ type Client struct {
 }
 
 func NewClient(ctx context.Context, options ...Option) (*Client, error) {
-	var option *redis.Options
+	var option redis.Options
 
 	for i := range options {
-		if err := options[i](option); err != nil {
+		if err := options[i](&option); err != nil {
 			return nil, err
 		}
 	}
 
-	client := redis.NewClient(option)
+	client := redis.NewClient(&option)
 	err := client.Ping(ctx).Err()
 	if err != nil {
 		return nil, err
